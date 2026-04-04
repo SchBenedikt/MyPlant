@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Material Design 3 Green Palette (Expressive & Deep) */
+  --color-m3-primary: #1b4332;
+  --color-m3-on-primary: #ffffff;
+  --color-m3-primary-container: #d8f3dc;
+  --color-m3-on-primary-container: #081c15;
+  
+  --color-m3-secondary: #40916c;
+  --color-m3-on-secondary: #ffffff;
+  --color-m3-secondary-container: #b7e4c7;
+  --color-m3-on-secondary-container: #1b4332;
+
+  --color-m3-tertiary: #2d6a4f;
+  --color-m3-on-tertiary: #ffffff;
+  --color-m3-tertiary-container: #95d5b2;
+  --color-m3-on-tertiary-container: #081c15;
+
+  --color-m3-surface: #f7fcf8;
+  --color-m3-on-surface: #191c1b;
+  --color-m3-surface-variant: #e0e4e1;
+  --color-m3-on-surface-variant: #404944;
+  
+  --color-m3-outline: #707974;
+  --color-m3-surface-container: #f0f5f1;
+  --color-m3-surface-container-high: #e8eee9;
+  --color-m3-surface-container-highest: #dfe6e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-m3-primary: #95d5b2;
+    --color-m3-on-primary: #003924;
+    --color-m3-primary-container: #005235;
+    --color-m3-on-primary-container: #b1f1ce;
+
+    --color-m3-secondary: #b7e4c7;
+    --color-m3-on-secondary: #003822;
+    --color-m3-secondary-container: #284f3a;
+    --color-m3-on-secondary-container: #d3f0dd;
+
+    --color-m3-tertiary: #a6ccbe;
+    --color-m3-on-tertiary: #0e352b;
+    --color-m3-tertiary-container: #264c41;
+    --color-m3-on-tertiary-container: #c1e9da;
+
+    --color-m3-surface: #191c1b;
+    --color-m3-on-surface: #e1e3e0;
+    --color-m3-surface-variant: #404944;
+    --color-m3-on-surface-variant: #bfc9c2;
+
+    --color-m3-outline: #89938d;
+    --color-m3-surface-container: #1d211f;
+    --color-m3-surface-container-high: #272b29;
+    --color-m3-surface-container-highest: #323634;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-m3-surface text-m3-on-surface font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .m3-card {
+    @apply bg-m3-surface-container rounded-[24px] p-6 transition-all duration-300 border border-m3-outline/5 hover:border-m3-primary/20 hover:bg-m3-surface-container-high;
+  }
+  
+  .m3-input {
+    @apply w-full bg-m3-surface-container-highest/30 border-b-2 border-m3-outline/20 rounded-t-xl px-5 py-4 focus:border-m3-primary focus:bg-m3-primary-container/20 outline-none transition-all font-medium;
+  }
+
+  .m3-fab {
+    @apply fixed bottom-8 right-8 bg-m3-primary text-m3-on-primary px-8 py-5 rounded-[24px] hover:scale-105 active:scale-95 transition-all z-40 flex items-center gap-4 font-display font-bold text-lg border border-m3-primary/10;
+  }
+
+  .m3-badge {
+    @apply px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-current/10;
+  }
+
+  .m3-btn-ghost {
+    @apply p-2 hover:bg-m3-surface-container-highest rounded-full transition-all text-m3-on-surface-variant;
+  }
+
+  .m3-btn-primary {
+    @apply bg-m3-primary text-m3-on-primary px-6 py-3 rounded-2xl font-bold hover:bg-m3-primary/90 transition-all active:scale-95 flex items-center gap-2;
+  }
+
+  .m3-btn-secondary {
+    @apply bg-m3-secondary-container text-m3-on-secondary-container px-6 py-3 rounded-2xl font-bold hover:bg-m3-secondary-container/80 transition-all active:scale-95 flex items-center gap-2;
+  }
+}
