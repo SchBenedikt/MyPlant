@@ -74,7 +74,7 @@
 
 @layer components {
   .m3-card {
-    @apply bg-m3-surface-container rounded-[24px] p-6 transition-all duration-300 border border-m3-outline/5 hover:border-m3-primary/20 hover:bg-m3-surface-container-high;
+    @apply bg-m3-surface-container rounded-[24px] p-6 transition-all duration-300 border border-m3-outline/10 hover:border-m3-primary/30 hover:bg-m3-surface-container-high;
   }
   
   .m3-input {
@@ -82,7 +82,7 @@
   }
 
   .m3-fab {
-    @apply fixed bottom-8 right-8 bg-m3-primary text-m3-on-primary px-8 py-5 rounded-[24px] hover:scale-105 active:scale-95 transition-all z-40 flex items-center gap-4 font-display font-bold text-lg border border-m3-primary/10;
+    @apply fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-m3-primary text-m3-on-primary px-6 py-4 md:px-8 md:py-5 rounded-[24px] hover:scale-105 active:scale-95 transition-all z-40 flex items-center gap-4 font-display font-bold text-lg border border-m3-primary/10;
   }
 
   .m3-badge {
