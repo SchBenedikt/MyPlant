@@ -325,6 +325,34 @@ function Sidebar({
   );
 }
 
+function MobileHeader({ language }: { language: Language }) {
+  const t = translations[language];
+  const { isInstallable, install } = usePWA();
+  return (
+    <header className="md:hidden sticky top-0 left-0 right-0 h-16 bg-m3-surface/80 backdrop-blur-xl border-b border-m3-outline/10 z-50 px-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="bg-m3-primary text-m3-on-primary p-2 rounded-xl border border-m3-primary/10">
+          <TreeDeciduous className="w-5 h-5" />
+        </div>
+        <h1 className="text-xl font-display font-black tracking-tight text-m3-primary">MyPlant</h1>
+      </div>
+      <div className="flex items-center gap-2">
+        {isInstallable && (
+          <button 
+            onClick={install}
+            className="p-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+          >
+            <Smartphone className="w-5 h-5" />
+          </button>
+        )}
+        <div className="w-8 h-8 flex items-center justify-center font-black text-[10px] bg-m3-secondary-container text-m3-on-secondary-container rounded-lg">
+          {language.toUpperCase()}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function BottomNav({ language }: { language: Language }) {
   const location = useLocation();
   const t = translations[language];
@@ -367,15 +395,6 @@ function BottomNav({ language }: { language: Language }) {
         <SettingsIcon className={`w-6 h-6 ${location.pathname === '/settings' ? 'fill-m3-primary/20' : ''}`} />
         <span className="text-[10px] font-black uppercase tracking-tighter">{t.settings}</span>
       </Link>
-      {isInstallable && (
-        <button 
-          onClick={install}
-          className="flex flex-col items-center gap-1 text-emerald-600 animate-bounce"
-        >
-          <Smartphone className="w-6 h-6" />
-          <span className="text-[10px] font-black uppercase tracking-tighter">Install</span>
-        </button>
-      )}
     </nav>
   );
 }
@@ -674,21 +693,21 @@ function PlantCard({ plant, onEdit, onDelete, onWater, language }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="m3-card group flex flex-col h-full hover:border-m3-primary/40"
+      className="m3-card !p-4 sm:!p-6 group flex flex-col h-full hover:border-m3-primary/40"
     >
-      <Link to={`/plant/${plant.id}`} className="relative h-48 -mx-6 -mt-6 mb-6 overflow-hidden bg-m3-surface-container-highest block rounded-t-[24px] border-b border-m3-outline/5">
+      <Link to={`/plant/${plant.id}`} className="relative h-40 sm:h-48 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-4 sm:mb-6 overflow-hidden bg-m3-surface-container-highest block rounded-t-[20px] sm:rounded-t-[24px] border-b border-m3-outline/5">
         {plant.images && plant.images.length > 0 ? (
           <img src={plant.images[0]} alt={plant.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-m3-primary/10">
-            {plant.type === 'Baum' ? <TreeDeciduous className="w-16 h-16" /> : 
-             plant.type === 'Strauch' ? <Sprout className="w-16 h-16" /> : 
-             plant.type === 'Blume' ? <Flower2 className="w-16 h-16" /> : 
-             plant.type === 'Gemüse' ? <Carrot className="w-16 h-16" /> : <Leaf className="w-16 h-16" />}
+            {plant.type === 'Baum' ? <TreeDeciduous className="w-12 h-12 sm:w-16 h-16" /> : 
+             plant.type === 'Strauch' ? <Sprout className="w-12 h-12 sm:w-16 h-16" /> : 
+             plant.type === 'Blume' ? <Flower2 className="w-12 h-12 sm:w-16 h-16" /> : 
+             plant.type === 'Gemüse' ? <Carrot className="w-12 h-12 sm:w-16 h-16" /> : <Leaf className="w-12 h-12 sm:w-16 h-16" />}
           </div>
         )}
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-          <span className={`m3-badge ${
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+          <span className={`m3-badge !px-2 !py-0.5 !text-[8px] sm:!text-[10px] ${
             waterStatus === 'thirsty' ? 'bg-rose-500 text-white border-rose-600' : 
             waterStatus === 'soon' ? 'bg-amber-400 text-amber-900 border-amber-500' : 
             waterStatus === 'outdoor' ? 'bg-sky-500 text-white border-sky-600' :
@@ -699,55 +718,55 @@ function PlantCard({ plant, onEdit, onDelete, onWater, language }: {
              waterStatus === 'outdoor' ? t.outdoorAutark : t.ok}
           </span>
           {plant.isOutdoor && (
-            <span className="m3-badge bg-m3-secondary text-white border-m3-secondary">{t.outdoor}</span>
+            <span className="m3-badge !px-2 !py-0.5 !text-[8px] sm:!text-[10px] bg-m3-secondary text-white border-m3-secondary">{t.outdoor}</span>
           )}
         </div>
       </Link>
 
-      <div className="flex justify-between items-start mb-4">
-        <Link to={`/plant/${plant.id}`} className="flex-1">
-          <h3 className="text-xl font-display font-bold text-m3-on-surface hover:text-m3-primary transition-colors line-clamp-1">{plant.name}</h3>
-          <span className="text-[10px] font-black text-m3-secondary uppercase tracking-widest flex items-center gap-1">
-            {plant.type === 'Baum' ? <TreeDeciduous className="w-3 h-3" /> : 
-             plant.type === 'Strauch' ? <Sprout className="w-3 h-3" /> : 
-             plant.type === 'Blume' ? <Flower2 className="w-3 h-3" /> : 
-             plant.type === 'Gemüse' ? <Carrot className="w-3 h-3" /> : <Leaf className="w-3 h-3" />}
+      <div className="flex justify-between items-start mb-3 sm:mb-4">
+        <Link to={`/plant/${plant.id}`} className="flex-1 min-w-0">
+          <h3 className="text-lg sm:text-xl font-display font-bold text-m3-on-surface hover:text-m3-primary transition-colors line-clamp-1">{plant.name}</h3>
+          <span className="text-[9px] sm:text-[10px] font-black text-m3-secondary uppercase tracking-widest flex items-center gap-1">
+            {plant.type === 'Baum' ? <TreeDeciduous className="w-2.5 h-2.5 sm:w-3 h-3" /> : 
+             plant.type === 'Strauch' ? <Sprout className="w-2.5 h-2.5 sm:w-3 h-3" /> : 
+             plant.type === 'Blume' ? <Flower2 className="w-2.5 h-2.5 sm:w-3 h-3" /> : 
+             plant.type === 'Gemüse' ? <Carrot className="w-2.5 h-2.5 sm:w-3 h-3" /> : <Leaf className="w-2.5 h-2.5 sm:w-3 h-3" />}
             {plant.type === 'Baum' ? t.tree : 
              plant.type === 'Strauch' ? t.shrub : 
              plant.type === 'Blume' ? t.flower : 
              plant.type === 'Gemüse' ? t.vegetable : t.other}
           </span>
         </Link>
-        <div className="flex gap-1">
-          <button onClick={(e) => { e.preventDefault(); onEdit(plant); }} className="m3-btn-ghost"><Edit2 className="w-4 h-4" /></button>
-          <button onClick={(e) => { e.preventDefault(); onDelete(plant.id); }} className="m3-btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"><Trash2 className="w-4 h-4" /></button>
+        <div className="flex gap-0.5 sm:gap-1">
+          <button onClick={(e) => { e.preventDefault(); onEdit(plant); }} className="m3-btn-ghost !p-1.5 sm:!p-2"><Edit2 className="w-3.5 h-3.5 sm:w-4 h-4" /></button>
+          <button onClick={(e) => { e.preventDefault(); onDelete(plant.id); }} className="m3-btn-ghost !p-1.5 sm:!p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"><Trash2 className="w-3.5 h-3.5 sm:w-4 h-4" /></button>
         </div>
       </div>
 
-      <div className="space-y-2 flex-1 text-sm font-medium text-m3-on-surface-variant">
+      <div className="space-y-1.5 sm:space-y-2 flex-1 text-xs sm:text-sm font-medium text-m3-on-surface-variant">
         <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 opacity-40" />
+          <MapPin className="w-3.5 h-3.5 sm:w-4 h-4 opacity-40" />
           <span className="line-clamp-1">{plant.location || t.notSpecified}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 opacity-40" />
-          <span>{t.planted}: {format(parseISO(plant.datePlanted), 'dd. MMM yyyy', { locale: language === 'de' ? de : enUS })}</span>
+          <Calendar className="w-3.5 h-3.5 sm:w-4 h-4 opacity-40" />
+          <span>{t.planted}: {format(parseISO(plant.datePlanted), 'dd.MM.yy', { locale: language === 'de' ? de : enUS })}</span>
         </div>
         {nextWatering && (
           <div className="flex items-center gap-2 text-m3-primary">
-            <Droplet className="w-4 h-4" />
+            <Droplet className="w-3.5 h-3.5 sm:w-4 h-4" />
             <span>{t.nextWatering}: {format(nextWatering, 'dd.MM.')}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-m3-outline/10 flex items-center justify-between">
-        <Link to={`/plant/${plant.id}`} className="text-xs font-bold text-m3-primary flex items-center gap-1 hover:underline">
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-m3-outline/10 flex items-center justify-between">
+        <Link to={`/plant/${plant.id}`} className="text-[10px] sm:text-xs font-bold text-m3-primary flex items-center gap-1 hover:underline">
           {t.details} <ChevronRight className="w-3 h-3" />
         </Link>
         <button 
           onClick={() => onWater(plant.id)}
-          className="m3-btn-secondary !py-2 !px-4 !text-xs border border-m3-secondary/10"
+          className="m3-btn-secondary !py-1.5 !px-3 !text-[10px] sm:!text-xs border border-m3-secondary/10"
         >
           <Droplets className="w-3 h-3" />
           {t.water}
@@ -780,67 +799,98 @@ function Dashboard({ stats, plants, language }: { stats: any, plants: Plant[], l
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 sm:px-12 py-12 space-y-12">
+    <main className="max-w-7xl mx-auto px-4 sm:px-12 py-8 sm:py-12 space-y-8 sm:space-y-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-5xl font-display font-black text-m3-primary mb-2">{t.dashboard}</h2>
-          <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest">{t.welcomeBack}</p>
+          <h2 className="text-3xl sm:text-5xl font-display font-black text-m3-primary mb-2">{t.dashboard}</h2>
+          <p className="text-sm sm:text-lg font-bold text-m3-secondary uppercase tracking-widest">{t.welcomeBack}</p>
         </div>
+        <button 
+          onClick={generateSummary}
+          disabled={isGenerating}
+          className="m3-btn-primary self-start md:self-auto"
+        >
+          {isGenerating ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Bot className="w-5 h-5" />
+          )}
+          {t.generateSummary}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {aiSummary && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="m3-card !p-6 bg-m3-primary-container/10 border-m3-primary/20 relative overflow-hidden group"
+        >
+          <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+            <Bot className="w-32 h-32 text-m3-primary" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4 text-m3-primary">
+              <Bot className="w-5 h-5" />
+              <span className="text-xs font-black uppercase tracking-widest">AI Summary</span>
+            </div>
+            <p className="text-m3-on-surface-variant leading-relaxed italic">"{aiSummary}"</p>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
         {/* Total Plants */}
-        <div className="bg-m3-primary-container text-m3-on-primary-container p-6 md:p-8 rounded-[32px] border border-m3-primary/10 flex flex-col justify-between min-h-[180px] md:min-h-[200px]">
+        <div className="bg-m3-primary-container text-m3-on-primary-container p-6 sm:p-8 rounded-[32px] border border-m3-primary/10 flex flex-col justify-between min-h-[160px] sm:min-h-[200px]">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{t.totalPlants}</p>
-            <h2 className="text-5xl md:text-6xl font-display font-black">{stats.total}</h2>
+            <h2 className="text-4xl sm:text-6xl font-display font-black">{stats.total}</h2>
           </div>
-          <div className="flex gap-4 text-xs font-bold opacity-70">
+          <div className="flex gap-4 text-[10px] sm:text-xs font-bold opacity-70">
             <span className="flex items-center gap-1"><Leaf className="w-3 h-3" /> {stats.indoor} {t.indoor}</span>
             <span className="flex items-center gap-1"><TreeDeciduous className="w-3 h-3" /> {stats.outdoor} {t.outdoor}</span>
           </div>
         </div>
 
         {/* Avg Age */}
-        <div className="bg-m3-secondary-container text-m3-on-secondary-container p-6 md:p-8 rounded-[32px] border border-m3-secondary/10 flex flex-col justify-between min-h-[180px] md:min-h-[200px]">
+        <div className="bg-m3-secondary-container text-m3-on-secondary-container p-6 sm:p-8 rounded-[32px] border border-m3-secondary/10 flex flex-col justify-between min-h-[160px] sm:min-h-[200px]">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{t.avgAge}</p>
-            <h2 className="text-5xl md:text-6xl font-display font-black">{stats.avgAge}</h2>
-            <p className="text-xs font-bold opacity-70 mt-1">{t.daysSincePlanting}</p>
+            <h2 className="text-4xl sm:text-6xl font-display font-black">{stats.avgAge}</h2>
+            <p className="text-[10px] sm:text-xs font-bold opacity-70 mt-1">{t.daysSincePlanting}</p>
           </div>
-          <div className="text-xs font-bold opacity-70 truncate">
+          <div className="text-[10px] sm:text-xs font-bold opacity-70 truncate">
             {t.oldestPlant}: {stats.oldestPlantName || 'N/A'}
           </div>
         </div>
 
         {/* Activity */}
-        <div className="bg-m3-surface-container-high p-6 md:p-8 rounded-[32px] border border-m3-outline/10 flex flex-col justify-between min-h-[180px] md:min-h-[200px]">
+        <div className="bg-m3-surface-container-high p-6 sm:p-8 rounded-[32px] border border-m3-outline/10 flex flex-col justify-between min-h-[160px] sm:min-h-[200px]">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{t.wateringEvents}</p>
-            <h2 className="text-5xl md:text-6xl font-display font-black">{stats.totalWateringEvents}</h2>
+            <h2 className="text-4xl sm:text-6xl font-display font-black">{stats.totalWateringEvents}</h2>
           </div>
-          <p className="text-xs font-bold opacity-70">{t.avgInterval}: {stats.avgInterval} {t.days}</p>
+          <p className="text-[10px] sm:text-xs font-bold opacity-70">{t.avgInterval}: {stats.avgInterval} {t.days}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Type Distribution */}
-        <div className="m3-card !p-8">
-          <h3 className="text-xl font-display font-bold mb-6 flex items-center gap-2">
+        <div className="m3-card !p-6 sm:!p-8">
+          <h3 className="text-lg sm:text-xl font-display font-bold mb-6 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-m3-primary" /> {t.distribution}
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
             {PLANT_TYPES.map(type => (
               <div key={type} className="p-4 bg-m3-surface-container rounded-2xl border border-m3-outline/5 hover:bg-m3-surface-container-high transition-colors flex items-center gap-4">
                 <div className="p-3 bg-m3-primary/10 text-m3-primary rounded-xl shrink-0">
-                  {type === 'Baum' ? <TreeDeciduous className="w-6 h-6" /> : 
-                   type === 'Strauch' ? <Sprout className="w-6 h-6" /> : 
-                   type === 'Blume' ? <Flower2 className="w-6 h-6" /> : 
-                   type === 'Gemüse' ? <Carrot className="w-6 h-6" /> : <Leaf className="w-6 h-6" />}
+                  {type === 'Baum' ? <TreeDeciduous className="w-5 h-5 sm:w-6 h-6" /> : 
+                   type === 'Strauch' ? <Sprout className="w-5 h-5 sm:w-6 h-6" /> : 
+                   type === 'Blume' ? <Flower2 className="w-5 h-5 sm:w-6 h-6" /> : 
+                   type === 'Gemüse' ? <Carrot className="w-5 h-5 sm:w-6 h-6" /> : <Leaf className="w-5 h-5 sm:w-6 h-6" />}
                 </div>
-                <div>
-                  <p className="text-2xl font-display font-black text-m3-primary">{stats.byType[type] || 0}</p>
-                  <p className="text-[10px] font-black uppercase tracking-tighter opacity-50">
+                <div className="min-w-0">
+                  <p className="text-xl sm:text-2xl font-display font-black text-m3-primary leading-none">{stats.byType[type] || 0}</p>
+                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-tighter opacity-50 truncate mt-1">
                     {type === 'Baum' ? t.tree : 
                      type === 'Strauch' ? t.shrub : 
                      type === 'Blume' ? t.flower : 
@@ -853,17 +903,17 @@ function Dashboard({ stats, plants, language }: { stats: any, plants: Plant[], l
         </div>
 
         {/* Recent Activity / Tips */}
-        <div className="m3-card !p-8 bg-m3-tertiary-container/10 border-m3-tertiary/10">
-          <h3 className="text-xl font-display font-bold mb-6 flex items-center gap-2 text-m3-tertiary">
+        <div className="m3-card !p-6 sm:!p-8 bg-m3-tertiary-container/10 border-m3-tertiary/10">
+          <h3 className="text-lg sm:text-xl font-display font-bold mb-6 flex items-center gap-2 text-m3-tertiary">
             <Info className="w-5 h-5" /> {t.gardenTip}
           </h3>
           <div className="space-y-4">
-            <p className="text-m3-on-surface-variant leading-relaxed">
+            <p className="text-sm sm:text-base text-m3-on-surface-variant leading-relaxed">
               {stats.total > 0 
                 ? t.tipContent
                 : t.tipEmpty}
             </p>
-            <Link to="/plants" className="m3-btn-secondary inline-flex">
+            <Link to="/plants" className="m3-btn-secondary inline-flex text-sm">
               {t.viewPlants} <ChevronRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -909,26 +959,26 @@ function PlantOverview({
   const t = translations[language];
 
   return (
-    <main className="max-w-7xl mx-auto px-6 sm:px-12 py-12">
-      <div className="mb-12">
-        <h2 className="text-4xl font-display font-black text-m3-primary">{t.plantList}</h2>
-        <p className="text-m3-on-surface-variant mt-2">{t.tipEmpty}</p>
+    <main className="max-w-7xl mx-auto px-4 sm:px-12 py-8 sm:py-12">
+      <div className="mb-8 sm:mb-12">
+        <h2 className="text-3xl sm:text-4xl font-display font-black text-m3-primary">{t.plantList}</h2>
+        <p className="text-sm sm:text-base text-m3-on-surface-variant mt-2">{t.tipEmpty}</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-12">
-        <div className="relative flex-1">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30" />
+      <div className="flex flex-col gap-4 mb-8 sm:mb-12">
+        <div className="relative">
+          <Search className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 h-5 opacity-30" />
           <input 
             type="text"
             placeholder={t.searchPlaceholder}
-            className="w-full bg-m3-surface-container h-16 pl-16 pr-6 rounded-3xl outline-none focus:ring-2 focus:ring-m3-primary/20 transition-all font-medium border border-m3-outline/5"
+            className="w-full bg-m3-surface-container h-14 sm:h-16 pl-12 sm:pl-16 pr-6 rounded-2xl sm:rounded-3xl outline-none focus:ring-2 focus:ring-m3-primary/20 transition-all font-medium border border-m3-outline/5 text-sm sm:text-base"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <select 
-            className="bg-m3-surface-container h-16 px-6 rounded-3xl font-bold text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[140px]"
+            className="bg-m3-surface-container h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[120px] sm:min-w-[140px]"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as any)}
           >
@@ -943,7 +993,7 @@ function PlantOverview({
             ))}
           </select>
           <select 
-            className="bg-m3-surface-container h-16 px-6 rounded-3xl font-bold text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[140px]"
+            className="bg-m3-surface-container h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[120px] sm:min-w-[140px]"
             value={selectedZoneId}
             onChange={(e) => setSelectedZoneId(e.target.value)}
           >
@@ -953,7 +1003,7 @@ function PlantOverview({
             ))}
           </select>
           <select 
-            className="bg-m3-surface-container h-16 px-6 rounded-3xl font-bold text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[140px]"
+            className="bg-m3-surface-container h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm outline-none cursor-pointer border border-m3-outline/5 min-w-[120px] sm:min-w-[140px]"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
@@ -966,7 +1016,7 @@ function PlantOverview({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-8">
         <AnimatePresence mode="popLayout">
           {filteredPlants.map(plant => (
             <PlantCard 
@@ -1033,24 +1083,24 @@ function AICareAssistant({ plant, language, onClose }: { plant: Plant, language:
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-24 right-4 left-4 md:left-auto md:w-96 bg-m3-surface rounded-[32px] shadow-2xl border border-m3-outline/10 z-[60] flex flex-col overflow-hidden h-[500px]"
+      className="fixed bottom-20 sm:bottom-24 right-4 left-4 md:left-auto md:w-96 bg-m3-surface rounded-[28px] sm:rounded-[32px] shadow-2xl border border-m3-outline/10 z-[60] flex flex-col overflow-hidden h-[450px] sm:h-[500px]"
     >
-      <div className="p-6 bg-m3-primary text-m3-on-primary flex justify-between items-center">
+      <div className="p-4 sm:p-6 bg-m3-primary text-m3-on-primary flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Bot className="w-6 h-6" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <Bot className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-sm leading-none">{t.aiCareChat}</h3>
-            <p className="text-[10px] opacity-60 mt-1 uppercase font-black tracking-widest">{plant.name}</p>
+            <h3 className="font-bold text-xs sm:text-sm leading-none">{t.aiCareChat}</h3>
+            <p className="text-[9px] sm:text-[10px] opacity-60 mt-1 uppercase font-black tracking-widest">{plant.name}</p>
           </div>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto space-y-4 bg-m3-surface-container-lowest scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-m3-surface-container-lowest scrollbar-hide">
         {messages.length === 0 && (
           <div className="text-center py-8 opacity-40">
             <MessageSquare className="w-12 h-12 mx-auto mb-4" />
@@ -1554,11 +1604,11 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
               </h3>
             </div>
 
-            <div className="m3-card !p-8 bg-m3-primary-container/20 border-m3-primary/10">
+            <div className="m3-card !p-4 sm:!p-8 bg-m3-primary-container/20 border-m3-primary/10">
               <form onSubmit={handleAddDiaryEntry} className="space-y-4">
                 <textarea 
                   placeholder={t.writeSomething}
-                  className="w-full bg-m3-surface min-h-[100px] p-6 rounded-3xl border border-m3-outline/10 outline-none focus:ring-2 focus:ring-m3-primary/20 transition-all font-medium"
+                  className="w-full bg-m3-surface min-h-[80px] sm:min-h-[100px] p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-m3-outline/10 outline-none focus:ring-2 focus:ring-m3-primary/20 transition-all font-medium text-sm sm:text-base"
                   value={diaryText}
                   onChange={(e) => setDiaryText(e.target.value)}
                 />
@@ -1684,7 +1734,7 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
               className="max-w-full max-h-full rounded-2xl object-contain"
               referrerPolicy="no-referrer"
             />
-            <button className="absolute top-8 right-8 text-white p-2 hover:bg-white/10 rounded-full">
+            <button className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full">
               <X className="w-8 h-8" />
             </button>
           </div>
@@ -1717,22 +1767,22 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
               initial={{ opacity: 0, scale: 0.9, y: 20 }} 
               animate={{ opacity: 1, scale: 1, y: 0 }} 
               exit={{ opacity: 0, scale: 0.9, y: 20 }} 
-              className="relative bg-m3-surface w-full max-w-lg rounded-[40px] overflow-hidden border border-m3-outline/10 shadow-2xl flex flex-col max-h-[80vh]"
+              className="relative bg-m3-surface w-full max-w-lg rounded-[28px] sm:rounded-[40px] overflow-hidden border border-m3-outline/10 shadow-2xl flex flex-col max-h-[80vh]"
             >
-              <div className="p-8 bg-m3-primary text-m3-on-primary flex justify-between items-center shrink-0">
+              <div className="p-4 sm:p-8 bg-m3-primary text-m3-on-primary flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-3">
                   <Bot className="w-6 h-6" />
-                  <h3 className="font-display font-black text-xl">
+                  <h3 className="font-display font-black text-lg sm:text-xl">
                     {aiResult.type === 'health' ? t.aiHealthCheck : 
                      aiResult.type === 'growth' ? t.aiGrowthPrediction : t.aiWateringSuggestion}
                   </h3>
                 </div>
                 <button onClick={() => setAiResult(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 scrollbar-hide">
                 {aiResult.type === 'health' && (
                   <>
                     <div>
@@ -2703,6 +2753,7 @@ export default function App() {
         />
         
         <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'md:pl-20' : 'md:pl-72'} pb-24 md:pb-0`}>
+          <MobileHeader language={language} />
           <Routes>
             <Route path="/" element={<Dashboard stats={stats} plants={plants} language={language} />} />
             <Route path="/plants" element={
@@ -2762,23 +2813,23 @@ export default function App() {
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-m3-surface w-full max-w-2xl rounded-[40px] overflow-hidden max-h-[90vh] flex flex-col border border-m3-outline/10 shadow-2xl">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-m3-surface w-full max-w-2xl rounded-[28px] sm:rounded-[40px] overflow-hidden max-h-[90vh] flex flex-col border border-m3-outline/10 shadow-2xl">
                 
                 {/* Modal Header */}
-                <div className="p-8 border-b border-m3-outline/5 flex justify-between items-center bg-m3-surface-container-low">
+                <div className="p-4 sm:p-8 border-b border-m3-outline/5 flex justify-between items-center bg-m3-surface-container-low">
                   <div>
-                    <h2 className="text-2xl font-display font-black text-m3-primary">{editingPlant ? t.editPlant : t.addPlant}</h2>
+                    <h2 className="text-xl sm:text-2xl font-display font-black text-m3-primary">{editingPlant ? t.editPlant : t.addPlant}</h2>
                     <div className="flex gap-2 mt-2">
                       {[1, 2, 3].map(step => (
                         <div key={step} className={`h-1.5 rounded-full transition-all duration-500 ${modalStep >= step ? 'w-8 bg-m3-primary' : 'w-4 bg-m3-outline/20'}`} />
                       ))}
                     </div>
                   </div>
-                  <button onClick={() => setIsModalOpen(false)} className="m3-btn-ghost !p-3"><X className="w-6 h-6" /></button>
+                  <button onClick={() => setIsModalOpen(false)} className="m3-btn-ghost !p-2 sm:!p-3"><X className="w-5 h-5 sm:w-6 sm:h-6" /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-                  <div className="flex-1 p-8 overflow-y-auto scrollbar-hide">
+                  <div className="flex-1 p-4 sm:p-8 overflow-y-auto scrollbar-hide">
                     <AnimatePresence mode="wait">
                       {modalStep === 1 && (
                         <motion.div 
@@ -2792,7 +2843,7 @@ export default function App() {
                             <label className="text-xs font-black uppercase opacity-40 px-2">{t.step1}</label>
                             <div 
                               onClick={() => fileInputRef.current?.click()}
-                              className="w-full h-56 rounded-[32px] border-2 border-dashed border-m3-outline/20 flex flex-col items-center justify-center cursor-pointer hover:bg-m3-primary/5 transition-all overflow-hidden relative group"
+                              className="w-full h-40 sm:h-56 rounded-[24px] sm:rounded-[32px] border-2 border-dashed border-m3-outline/20 flex flex-col items-center justify-center cursor-pointer hover:bg-m3-primary/5 transition-all overflow-hidden relative group"
                             >
                               {formData.images && formData.images.length > 0 ? (
                                 <div className="flex w-full h-full">
@@ -2948,7 +2999,7 @@ export default function App() {
                           className="space-y-8"
                         >
                           <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <label className="text-xs font-black uppercase opacity-40 px-2">{t.health}</label>
                                 <input placeholder={`${t.health} (AI)`} className="m3-input" value={formData.health} onChange={e => setFormData({...formData, health: e.target.value})} />
@@ -2959,7 +3010,7 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <label className="text-xs font-black uppercase opacity-40 px-2">{t.age}</label>
                                 <input placeholder={`${t.age} (AI)`} className="m3-input" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} />
@@ -2971,7 +3022,7 @@ export default function App() {
                             </div>
 
                             {!formData.isOutdoor && (
-                              <div className="grid grid-cols-2 gap-4 p-5 bg-m3-surface-container rounded-[24px] border border-m3-outline/5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 sm:p-5 bg-m3-surface-container rounded-[24px] border border-m3-outline/5">
                                 <div className="space-y-2">
                                   <label className="text-xs font-black uppercase opacity-40 px-2">{t.wateringInterval}</label>
                                   <div className="relative">
@@ -2997,30 +3048,30 @@ export default function App() {
                   </div>
 
                   {/* Modal Footer */}
-                  <div className="p-8 bg-m3-surface-container-low border-t border-m3-outline/5 flex gap-4">
+                  <div className="p-4 sm:p-8 bg-m3-surface-container-low border-t border-m3-outline/5 flex gap-4">
                     {modalStep > 1 && (
                       <button 
                         type="button" 
                         onClick={() => setModalStep(prev => prev - 1)}
-                        className="m3-btn-ghost h-16 px-8 text-lg"
+                        className="m3-btn-ghost h-14 sm:h-16 px-4 sm:px-8 text-base sm:text-lg"
                       >
-                        <ChevronLeft className="w-5 h-5 mr-2" /> {t.previous}
+                        <ChevronLeft className="w-5 h-5 mr-1 sm:mr-2" /> {t.previous}
                       </button>
                     )}
                     {modalStep < 3 ? (
                       <button 
                         type="button" 
                         onClick={() => setModalStep(prev => prev + 1)}
-                        className="m3-btn-primary flex-1 h-16 text-lg justify-center"
+                        className="m3-btn-primary flex-1 h-14 sm:h-16 text-base sm:text-lg justify-center"
                       >
-                        {t.next} <ChevronRight className="w-5 h-5 ml-2" />
+                        {t.next} <ChevronRight className="w-5 h-5 ml-1 sm:ml-2" />
                       </button>
                     ) : (
                       <button 
                         type="submit" 
-                        className="m3-btn-primary flex-1 h-16 text-lg justify-center"
+                        className="m3-btn-primary flex-1 h-14 sm:h-16 text-base sm:text-lg justify-center"
                       >
-                        <Check className="w-6 h-6 mr-2" /> {t.save}
+                        <Check className="w-6 h-6 mr-1 sm:mr-2" /> {t.save}
                       </button>
                     )}
                   </div>
