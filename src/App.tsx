@@ -40,9 +40,47 @@ import {
   Move,
   ChevronLeft,
   Menu,
-  Clock
+  Clock,
+  Flower2,
+  Carrot,
+  Smartphone,
+  Settings as SettingsIcon,
+  Moon,
+  Sun,
+  Monitor,
+  Database,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
+// PWA Install Hook
+function usePWA() {
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const install = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+  };
+
+  return { isInstallable, install };
+}
+import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import Markdown from 'react-markdown';
 import { 
   LineChart, 
@@ -85,6 +123,13 @@ interface Zone {
   height: number;
 }
 
+interface AIInsight {
+  id: string;
+  type: 'health' | 'growth' | 'water';
+  date: string;
+  data: any;
+}
+
 interface Plant {
   id: string;
   name: string;
@@ -103,6 +148,7 @@ interface Plant {
   age?: string;
   mapPosition?: { x: number; y: number };
   zoneId?: string;
+  aiInsights?: AIInsight[];
 }
 
 const PLANT_TYPES: PlantType[] = ['Baum', 'Strauch', 'Blume', 'Gemüse', 'Sonstiges'];
@@ -137,10 +183,11 @@ function Sidebar({
 }) {
   const location = useLocation();
   const t = translations[language];
+  const { isInstallable, install } = usePWA();
 
   return (
     <aside className={`fixed left-0 top-0 h-screen bg-m3-surface border-r border-m3-outline/10 hidden md:flex flex-col z-50 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-72'}`}>
-      <div className="p-6 flex items-center justify-between">
+      <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity overflow-hidden">
           <div className="bg-m3-primary text-m3-on-primary p-3 rounded-2xl shrink-0 border border-m3-primary/10">
             <TreeDeciduous className="w-6 h-6" />
@@ -152,19 +199,32 @@ function Sidebar({
             </div>
           )}
         </Link>
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex m3-btn-ghost !p-2 ml-2"
-        >
-          {isCollapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
+        {!isCollapsed && (
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden lg:flex m3-btn-ghost !p-2 ml-2"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
       </div>
+
+      {isCollapsed && (
+        <div className="flex justify-center mb-4">
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="m3-btn-ghost !p-2"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       <nav className="flex-1 px-4 space-y-2 py-4 overflow-y-auto scrollbar-hide">
         <div className="space-y-1">
           <Link 
             to="/" 
-            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${location.pathname === '/' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
+            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${isCollapsed ? 'justify-center' : ''} ${location.pathname === '/' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
             title={t.dashboard}
           >
             <LayoutGrid className="w-6 h-6 shrink-0" />
@@ -172,7 +232,7 @@ function Sidebar({
           </Link>
           <Link 
             to="/plants" 
-            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${location.pathname === '/plants' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
+            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${isCollapsed ? 'justify-center' : ''} ${location.pathname === '/plants' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
             title={t.plantList}
           >
             <Sprout className="w-6 h-6 shrink-0" />
@@ -180,11 +240,27 @@ function Sidebar({
           </Link>
           <Link 
             to="/map" 
-            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${location.pathname === '/map' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
+            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${isCollapsed ? 'justify-center' : ''} ${location.pathname === '/map' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
             title={t.gardenMap}
           >
             <MapIcon className="w-6 h-6 shrink-0" />
             {!isCollapsed && <span className="font-bold whitespace-nowrap">{t.gardenMap}</span>}
+          </Link>
+          <Link 
+            to="/insights" 
+            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${isCollapsed ? 'justify-center' : ''} ${location.pathname === '/insights' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
+            title={t.aiInsights}
+          >
+            <Bot className="w-6 h-6 shrink-0" />
+            {!isCollapsed && <span className="font-bold whitespace-nowrap">{t.aiInsights}</span>}
+          </Link>
+          <Link 
+            to="/settings" 
+            className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 border ${isCollapsed ? 'justify-center' : ''} ${location.pathname === '/settings' ? 'bg-m3-primary text-m3-on-primary border-m3-primary/10' : 'hover:bg-m3-surface-container-high text-m3-on-surface-variant border-transparent'}`}
+            title={t.settings}
+          >
+            <SettingsIcon className="w-6 h-6 shrink-0" />
+            {!isCollapsed && <span className="font-bold whitespace-nowrap">{t.settings}</span>}
           </Link>
         </div>
 
@@ -199,6 +275,18 @@ function Sidebar({
                 {t.smartTipContent}
               </p>
             </div>
+          </div>
+        )}
+
+        {isInstallable && !isCollapsed && (
+          <div className="mt-8 px-4">
+            <button 
+              onClick={install}
+              className="w-full bg-emerald-600 text-white p-4 rounded-2xl flex items-center gap-3 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+            >
+              <Smartphone className="w-5 h-5" />
+              <span className="font-bold text-sm">App installieren</span>
+            </button>
           </div>
         )}
       </nav>
@@ -240,6 +328,7 @@ function Sidebar({
 function BottomNav({ language }: { language: Language }) {
   const location = useLocation();
   const t = translations[language];
+  const { isInstallable, install } = usePWA();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-m3-surface/80 backdrop-blur-xl border-t border-m3-outline/10 flex justify-around items-center p-4 z-50 md:hidden">
@@ -264,7 +353,304 @@ function BottomNav({ language }: { language: Language }) {
         <MapIcon className={`w-6 h-6 ${location.pathname === '/map' ? 'fill-m3-primary/20' : ''}`} />
         <span className="text-[10px] font-black uppercase tracking-tighter">{t.gardenMap}</span>
       </Link>
+      <Link 
+        to="/insights" 
+        className={`flex flex-col items-center gap-1 transition-all duration-200 ${location.pathname === '/insights' ? 'text-m3-primary' : 'text-m3-on-surface-variant/60'}`}
+      >
+        <Bot className={`w-6 h-6 ${location.pathname === '/insights' ? 'fill-m3-primary/20' : ''}`} />
+        <span className="text-[10px] font-black uppercase tracking-tighter">{t.aiInsights}</span>
+      </Link>
+      <Link 
+        to="/settings" 
+        className={`flex flex-col items-center gap-1 transition-all duration-200 ${location.pathname === '/settings' ? 'text-m3-primary' : 'text-m3-on-surface-variant/60'}`}
+      >
+        <SettingsIcon className={`w-6 h-6 ${location.pathname === '/settings' ? 'fill-m3-primary/20' : ''}`} />
+        <span className="text-[10px] font-black uppercase tracking-tighter">{t.settings}</span>
+      </Link>
+      {isInstallable && (
+        <button 
+          onClick={install}
+          className="flex flex-col items-center gap-1 text-emerald-600 animate-bounce"
+        >
+          <Smartphone className="w-6 h-6" />
+          <span className="text-[10px] font-black uppercase tracking-tighter">Install</span>
+        </button>
+      )}
     </nav>
+  );
+}
+
+function AIInsightsView({ stats, language }: { stats: any, language: Language }) {
+  const t = translations[language];
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateSummary = async () => {
+    setIsGenerating(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Analyze this garden state: Total plants: ${stats.total}, Thirsty: ${stats.thirsty}, Outdoor: ${stats.outdoor}. 
+                  Provide a detailed summary of the garden health and growth, and provide 3 actionable tips for the gardener in ${language === 'en' ? 'English' : 'German'}.`,
+      });
+      setAiSummary(response.text || '...');
+    } catch (e) {
+      setAiSummary('Error: Could not generate summary.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-12 space-y-12">
+      <div>
+        <h2 className="text-5xl font-display font-black text-m3-primary mb-2">{t.aiInsights}</h2>
+        <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest">Smart Garden Analysis</p>
+      </div>
+
+      <div className="m3-card !p-8 bg-gradient-to-br from-m3-primary/5 to-m3-secondary/5 border-m3-primary/10 relative overflow-hidden group">
+        <div className="absolute -right-8 -top-8 opacity-5 group-hover:scale-110 transition-transform duration-700">
+          <Bot className="w-48 h-48 text-m3-primary" />
+        </div>
+        
+        <div className="relative z-10 space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-m3-primary text-m3-on-primary rounded-2xl">
+                <Bot className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-display font-bold">{t.aiHealthCheck}</h3>
+                <p className="text-xs font-bold opacity-40 uppercase tracking-widest">Powered by Gemini</p>
+              </div>
+            </div>
+            <button 
+              onClick={generateSummary}
+              disabled={isGenerating}
+              className="m3-btn-primary"
+            >
+              {isGenerating ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <TrendingUp className="w-5 h-5" />
+              )}
+              {t.generateSummary}
+            </button>
+          </div>
+
+          {aiSummary ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none bg-m3-surface-container/50 p-8 rounded-3xl border border-m3-outline/5 leading-relaxed">
+              <Markdown>{aiSummary}</Markdown>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="w-20 h-20 bg-m3-surface-container-high rounded-[32px] flex items-center justify-center">
+                <Bot className="w-10 h-10 opacity-20" />
+              </div>
+              <p className="text-m3-on-surface-variant/60 font-medium">{t.aiSummaryPlaceholder}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Settings({ 
+  language, 
+  theme, 
+  setTheme, 
+  dbConfig, 
+  setDbConfig,
+  dbStatus
+}: { 
+  language: Language, 
+  theme: 'light' | 'dark' | 'auto', 
+  setTheme: (t: 'light' | 'dark' | 'auto') => void,
+  dbConfig: any,
+  setDbConfig: (c: any) => void,
+  dbStatus: 'connected' | 'disconnected' | 'connecting'
+}) {
+  const t = translations[language];
+  const [localDbConfig, setLocalDbConfig] = useState(dbConfig);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean, message: string } | null>(null);
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const response = await fetch('/api/config/db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localDbConfig)
+      });
+      const result = await response.json();
+      setTestResult({ success: result.success, message: result.message || result.error });
+      if (result.success) {
+        setDbConfig(localDbConfig);
+        localStorage.setItem('myplant_db_config', JSON.stringify(localDbConfig));
+      }
+    } catch (e: any) {
+      setTestResult({ success: false, message: e.message });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const sqlCommands = `CREATE DATABASE IF NOT EXISTS garden_db;
+USE garden_db;
+
+CREATE TABLE IF NOT EXISTS plants (
+  id VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  datePlanted DATETIME NOT NULL,
+  isOutdoor BOOLEAN DEFAULT FALSE,
+  health VARCHAR(50),
+  size VARCHAR(50),
+  notes TEXT,
+  images JSON,
+  history JSON,
+  aiInsights JSON,
+  position JSON
+);`;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-12 space-y-12">
+      <div>
+        <h2 className="text-5xl font-display font-black text-m3-primary mb-2">{t.settings}</h2>
+        <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest">Customize your experience</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Theme Settings */}
+        <div className="m3-card !p-8 space-y-6">
+          <h3 className="text-xl font-display font-bold flex items-center gap-2">
+            <Sun className="w-5 h-5 text-m3-primary" /> {t.theme}
+          </h3>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { id: 'light', icon: Sun, label: t.light },
+              { id: 'dark', icon: Moon, label: t.dark },
+              { id: 'auto', icon: Monitor, label: t.auto }
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setTheme(item.id as any)}
+                className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${theme === item.id ? 'border-m3-primary bg-m3-primary-container text-m3-on-primary-container' : 'border-m3-outline/10 hover:border-m3-primary/30'}`}
+              >
+                <item.icon className="w-6 h-6" />
+                <span className="text-xs font-bold">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Database Status */}
+        <div className="m3-card !p-8 space-y-6">
+          <h3 className="text-xl font-display font-bold flex items-center gap-2">
+            <Database className="w-5 h-5 text-m3-primary" /> {t.databaseSettings}
+          </h3>
+          <div className="flex items-center gap-4 p-4 bg-m3-surface-container rounded-2xl border border-m3-outline/5">
+            <div className={`w-3 h-3 rounded-full animate-pulse ${dbStatus === 'connected' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            <div>
+              <p className="text-xs font-black uppercase opacity-40">Status</p>
+              <p className="font-bold">{dbStatus === 'connected' ? t.connected : t.disconnected}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Database Configuration */}
+      <div className="m3-card !p-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-display font-bold flex items-center gap-2">
+            <Database className="w-5 h-5 text-m3-primary" /> MySQL Configuration
+          </h3>
+          <button 
+            onClick={handleTestConnection}
+            disabled={isTesting}
+            className="m3-btn-primary"
+          >
+            {isTesting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check className="w-5 h-5" />}
+            {t.connect}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-5">{t.dbHost}</label>
+            <input 
+              type="text" 
+              value={localDbConfig.host} 
+              onChange={e => setLocalDbConfig({ ...localDbConfig, host: e.target.value })}
+              placeholder="192.168.1.100"
+              className="m3-input"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-5">{t.dbPort}</label>
+            <input 
+              type="text" 
+              value={localDbConfig.port} 
+              onChange={e => setLocalDbConfig({ ...localDbConfig, port: e.target.value })}
+              placeholder="3306"
+              className="m3-input"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-5">{t.dbUser}</label>
+            <input 
+              type="text" 
+              value={localDbConfig.user} 
+              onChange={e => setLocalDbConfig({ ...localDbConfig, user: e.target.value })}
+              placeholder="root"
+              className="m3-input"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-5">{t.dbPassword}</label>
+            <input 
+              type="password" 
+              value={localDbConfig.password} 
+              onChange={e => setLocalDbConfig({ ...localDbConfig, password: e.target.value })}
+              placeholder="••••••••"
+              className="m3-input"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-5">{t.dbName}</label>
+            <input 
+              type="text" 
+              value={localDbConfig.database} 
+              onChange={e => setLocalDbConfig({ ...localDbConfig, database: e.target.value })}
+              placeholder="garden_db"
+              className="m3-input"
+            />
+          </div>
+        </div>
+
+        {testResult && (
+          <div className={`p-4 rounded-2xl border flex items-center gap-4 ${testResult.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700' : 'bg-rose-500/10 border-rose-500/20 text-rose-700'}`}>
+            {testResult.success ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+            <p className="text-sm font-bold">{testResult.message}</p>
+          </div>
+        )}
+      </div>
+
+      {/* SQL Instructions */}
+      <div className="m3-card !p-8 space-y-6">
+        <h3 className="text-xl font-display font-bold flex items-center gap-2">
+          <Info className="w-5 h-5 text-m3-primary" /> {t.sqlInstructions}
+        </h3>
+        <p className="text-sm font-medium opacity-60">{t.sqlInstructionsContent}</p>
+        <div className="bg-m3-surface-container-highest p-6 rounded-2xl border border-m3-outline/10 font-mono text-xs leading-relaxed overflow-x-auto">
+          <pre>{sqlCommands}</pre>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -295,7 +681,10 @@ function PlantCard({ plant, onEdit, onDelete, onWater, language }: {
           <img src={plant.images[0]} alt={plant.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-m3-primary/10">
-            <TreeDeciduous className="w-16 h-16" />
+            {plant.type === 'Baum' ? <TreeDeciduous className="w-16 h-16" /> : 
+             plant.type === 'Strauch' ? <Sprout className="w-16 h-16" /> : 
+             plant.type === 'Blume' ? <Flower2 className="w-16 h-16" /> : 
+             plant.type === 'Gemüse' ? <Carrot className="w-16 h-16" /> : <Leaf className="w-16 h-16" />}
           </div>
         )}
         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -318,7 +707,11 @@ function PlantCard({ plant, onEdit, onDelete, onWater, language }: {
       <div className="flex justify-between items-start mb-4">
         <Link to={`/plant/${plant.id}`} className="flex-1">
           <h3 className="text-xl font-display font-bold text-m3-on-surface hover:text-m3-primary transition-colors line-clamp-1">{plant.name}</h3>
-          <span className="text-[10px] font-black text-m3-secondary uppercase tracking-widest">
+          <span className="text-[10px] font-black text-m3-secondary uppercase tracking-widest flex items-center gap-1">
+            {plant.type === 'Baum' ? <TreeDeciduous className="w-3 h-3" /> : 
+             plant.type === 'Strauch' ? <Sprout className="w-3 h-3" /> : 
+             plant.type === 'Blume' ? <Flower2 className="w-3 h-3" /> : 
+             plant.type === 'Gemüse' ? <Carrot className="w-3 h-3" /> : <Leaf className="w-3 h-3" />}
             {plant.type === 'Baum' ? t.tree : 
              plant.type === 'Strauch' ? t.shrub : 
              plant.type === 'Blume' ? t.flower : 
@@ -393,40 +786,6 @@ function Dashboard({ stats, plants, language }: { stats: any, plants: Plant[], l
           <h2 className="text-5xl font-display font-black text-m3-primary mb-2">{t.dashboard}</h2>
           <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest">{t.welcomeBack}</p>
         </div>
-        
-        {/* AI Summary Card */}
-        <div className="flex-1 max-w-xl m3-card !p-6 bg-gradient-to-br from-m3-primary/10 to-m3-secondary/10 border-m3-primary/5 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
-            <Bot className="w-24 h-24 text-m3-primary" />
-          </div>
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Bot className="w-4 h-4 text-m3-primary" />
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-m3-primary">{t.aiHealthCheck}</h3>
-              </div>
-              {aiSummary ? (
-                <div className="text-xs font-medium text-m3-on-surface-variant leading-relaxed line-clamp-2">
-                  <Markdown>{aiSummary}</Markdown>
-                </div>
-              ) : (
-                <p className="text-xs text-m3-on-surface-variant/60 italic">{t.aiSummaryPlaceholder || 'Generate AI Summary...'}</p>
-              )}
-            </div>
-            <button 
-              onClick={generateSummary}
-              disabled={isGenerating}
-              className="w-10 h-10 bg-m3-primary text-m3-on-primary rounded-xl flex items-center justify-center shadow-lg shadow-m3-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-              title={t.generateSummary}
-            >
-              {isGenerating ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <TrendingUp className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -472,14 +831,22 @@ function Dashboard({ stats, plants, language }: { stats: any, plants: Plant[], l
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
             {PLANT_TYPES.map(type => (
-              <div key={type} className="p-4 bg-m3-surface-container rounded-2xl border border-m3-outline/5 hover:bg-m3-surface-container-high transition-colors">
-                <p className="text-2xl font-display font-black text-m3-primary">{stats.byType[type] || 0}</p>
-                <p className="text-[10px] font-black uppercase tracking-tighter opacity-50">
-                  {type === 'Baum' ? t.tree : 
-                   type === 'Strauch' ? t.shrub : 
-                   type === 'Blume' ? t.flower : 
-                   type === 'Gemüse' ? t.vegetable : t.other}
-                </p>
+              <div key={type} className="p-4 bg-m3-surface-container rounded-2xl border border-m3-outline/5 hover:bg-m3-surface-container-high transition-colors flex items-center gap-4">
+                <div className="p-3 bg-m3-primary/10 text-m3-primary rounded-xl shrink-0">
+                  {type === 'Baum' ? <TreeDeciduous className="w-6 h-6" /> : 
+                   type === 'Strauch' ? <Sprout className="w-6 h-6" /> : 
+                   type === 'Blume' ? <Flower2 className="w-6 h-6" /> : 
+                   type === 'Gemüse' ? <Carrot className="w-6 h-6" /> : <Leaf className="w-6 h-6" />}
+                </div>
+                <div>
+                  <p className="text-2xl font-display font-black text-m3-primary">{stats.byType[type] || 0}</p>
+                  <p className="text-[10px] font-black uppercase tracking-tighter opacity-50">
+                    {type === 'Baum' ? t.tree : 
+                     type === 'Strauch' ? t.shrub : 
+                     type === 'Blume' ? t.flower : 
+                     type === 'Gemüse' ? t.vegetable : t.other}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -862,10 +1229,16 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
       const result = JSON.parse(response.text || '{}');
       setAiResult({ type: action, data: result });
       
-      // Also append to notes for persistence
+      const newInsight: AIInsight = {
+        id: crypto.randomUUID(),
+        type: action,
+        date: new Date().toISOString(),
+        data: result
+      };
+
       setPlants(prev => prev.map(p => p.id === plant.id ? { 
         ...p, 
-        notes: (p.notes || '') + `\n\n[AI ${action.toUpperCase()} - ${new Date().toLocaleDateString()}]: ` + (result.status || result.projection || result.schedule)
+        aiInsights: [newInsight, ...(p.aiInsights || [])]
       } : p));
     } catch (e) {
       console.error(e);
@@ -1053,7 +1426,11 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-5xl font-display font-black text-m3-primary mb-2">{plant.name}</h2>
-              <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest">
+              <p className="text-lg font-bold text-m3-secondary uppercase tracking-widest flex items-center gap-2">
+                {plant.type === 'Baum' ? <TreeDeciduous className="w-5 h-5" /> : 
+                 plant.type === 'Strauch' ? <Sprout className="w-5 h-5" /> : 
+                 plant.type === 'Blume' ? <Flower2 className="w-5 h-5" /> : 
+                 plant.type === 'Gemüse' ? <Carrot className="w-5 h-5" /> : <Leaf className="w-5 h-5" />}
                 {plant.type === 'Baum' ? t.tree : 
                  plant.type === 'Strauch' ? t.shrub : 
                  plant.type === 'Blume' ? t.flower : 
@@ -1088,6 +1465,85 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
             <p className="text-m3-on-surface-variant leading-relaxed whitespace-pre-wrap">
               {plant.notes || t.notSpecified}
             </p>
+          </div>
+
+          {/* AI Insights Section */}
+          <div className="space-y-6">
+            <h3 className="text-2xl font-display font-black text-m3-primary flex items-center gap-3">
+              <Bot className="w-6 h-6" /> {t.aiInsights}
+            </h3>
+            
+            <div className="space-y-4">
+              {plant.aiInsights && plant.aiInsights.length > 0 ? (
+                plant.aiInsights.map((insight) => (
+                  <div key={insight.id} className="m3-card !p-6 border-m3-primary/10 bg-m3-primary-container/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        {insight.type === 'health' ? <TrendingUp className="w-4 h-4 text-emerald-600" /> :
+                         insight.type === 'growth' ? <Calendar className="w-4 h-4 text-purple-600" /> :
+                         <Droplets className="w-4 h-4 text-blue-600" />}
+                        <span className="text-xs font-black uppercase tracking-widest text-m3-primary">
+                          {insight.type === 'health' ? t.aiHealthCheck : 
+                           insight.type === 'growth' ? t.aiGrowthPrediction : t.aiWateringSuggestion}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold opacity-40">
+                        {format(parseISO(insight.date), 'dd.MM.yyyy HH:mm')}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {insight.type === 'health' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-black uppercase opacity-40 mb-1">{t.healthStatus}</p>
+                            <p className="text-sm font-bold">{insight.data.status}</p>
+                          </div>
+                          {insight.data.indicators?.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-black uppercase opacity-40 mb-1">{t.indicators}</p>
+                              <p className="text-xs">{insight.data.indicators.join(', ')}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {insight.type === 'growth' && (
+                        <div>
+                          <p className="text-[10px] font-black uppercase opacity-40 mb-1">{t.projection}</p>
+                          <p className="text-sm">{insight.data.projection}</p>
+                        </div>
+                      )}
+
+                      {insight.type === 'water' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-black uppercase opacity-40 mb-1">{t.optimalTime}</p>
+                            <p className="text-sm font-bold">{insight.data.optimalTime}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase opacity-40 mb-1">{t.nextWatering}</p>
+                            <p className="text-xs">{insight.data.schedule}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <button 
+                        onClick={() => setAiResult({ type: insight.type, data: insight.data })}
+                        className="text-[10px] font-black uppercase tracking-widest text-m3-primary hover:underline"
+                      >
+                        {t.details}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="m3-card !p-8 text-center opacity-30 border-dashed">
+                  <Bot className="w-12 h-12 mx-auto mb-2" />
+                  <p className="text-sm font-bold">{t.noInsights}</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Diary Section */}
@@ -1399,6 +1855,133 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
 
 // --- Garden Map Component ---
 
+function MapPlantItem({ 
+  plant, 
+  mapRef, 
+  onDragEnd, 
+  isDragging, 
+  setIsDragging,
+  t,
+  zoom
+}: { 
+  plant: Plant, 
+  mapRef: React.RefObject<HTMLDivElement | null>, 
+  onDragEnd: (id: string, info: any) => void,
+  isDragging: string | null,
+  setIsDragging: (id: string | null) => void,
+  t: any,
+  zoom: number
+}) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const handleDragEnd = (event: any, info: any) => {
+    onDragEnd(plant.id, info);
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragConstraints={mapRef}
+      onDragStart={() => setIsDragging(plant.id)}
+      onDragEnd={handleDragEnd}
+      animate={{ 
+        left: plant.mapPosition ? `${plant.mapPosition.x}%` : '50%', 
+        top: plant.mapPosition ? `${plant.mapPosition.y}%` : '50%',
+      }}
+      transition={{ 
+        left: { type: 'spring', stiffness: 300, damping: 30 },
+        top: { type: 'spring', stiffness: 300, damping: 30 }
+      }}
+      style={{ 
+        x,
+        y,
+        position: 'absolute',
+        zIndex: isDragging === plant.id ? 50 : 20,
+        scale: 1 / Math.sqrt(zoom) // Counter-scale slightly so icons don't get too huge but still feel zoomed
+      }}
+      className="cursor-grab active:cursor-grabbing group"
+    >
+      <div className="flex flex-col items-center gap-2 -translate-x-1/2 -translate-y-1/2">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border border-m3-outline/10 transition-all duration-300 ${
+          isDragging === plant.id ? 'scale-125 rotate-12 bg-m3-primary text-m3-on-primary shadow-xl' : 'bg-white text-m3-primary hover:scale-110 shadow-md'
+        }`}>
+          {plant.type === 'Baum' ? <TreeDeciduous className="w-6 h-6" /> : 
+           plant.type === 'Blume' ? <Leaf className="w-6 h-6" /> : 
+           <Sprout className="w-6 h-6" />}
+        </div>
+        <div className="bg-m3-surface-container-high px-3 py-1 rounded-full border border-m3-outline/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm">
+          <p className="text-[10px] font-bold">{plant.name}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MapZoneItem({
+  zone,
+  mapRef,
+  onDragEnd,
+  onTap,
+  isEditing,
+  t,
+  zoom
+}: {
+  zone: Zone,
+  mapRef: React.RefObject<HTMLDivElement | null>,
+  onDragEnd: (id: string, info: any) => void,
+  onTap: () => void,
+  isEditing: boolean,
+  t: any,
+  zoom: number
+}) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const handleDragEnd = (event: any, info: any) => {
+    onDragEnd(zone.id, info);
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragConstraints={mapRef}
+      onDragEnd={handleDragEnd}
+      onTap={onTap}
+      animate={{ 
+        left: `${zone.x}%`, 
+        top: `${zone.y}%`,
+      }}
+      transition={{ 
+        left: { type: 'spring', stiffness: 300, damping: 30 },
+        top: { type: 'spring', stiffness: 300, damping: 30 }
+      }}
+      style={{ 
+        x,
+        y,
+        position: 'absolute', 
+        width: `${zone.width}%`, 
+        height: `${zone.height}%`,
+        backgroundColor: zone.color,
+        border: `2px solid ${zone.color}`,
+        zIndex: 10,
+        opacity: 0.3
+      }}
+      className={`cursor-move rounded-xl transition-all ${isEditing ? 'opacity-60 border-white ring-4 ring-white/20' : ''}`}
+    >
+      <div className="absolute top-2 left-2 bg-black/40 text-white px-2 py-0.5 rounded text-[8px] font-bold whitespace-nowrap" style={{ scale: 1/zoom, transformOrigin: 'top left' }}>
+        {zone.name}
+      </div>
+    </motion.div>
+  );
+}
+
 function GardenMap({ 
   plants, 
   setPlants, 
@@ -1406,7 +1989,8 @@ function GardenMap({
   setZones,
   mapBackground, 
   setMapBackground,
-  language
+  language,
+  dbStatus
 }: { 
   plants: Plant[], 
   setPlants: React.Dispatch<React.SetStateAction<Plant[]>>,
@@ -1414,69 +1998,77 @@ function GardenMap({
   setZones: React.Dispatch<React.SetStateAction<Zone[]>>,
   mapBackground: string | null,
   setMapBackground: (bg: string | null) => void,
-  language: Language
+  language: Language,
+  dbStatus: 'connected' | 'disconnected' | 'connecting'
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState<string | null>(null);
-  const dragOffset = useRef({ x: 0, y: 0 });
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const t = translations[language];
 
-  const handleDragStart = (info: any, plant: Plant) => {
+  const handleDragEnd = async (id: string, info: any) => {
     if (!mapRef.current) return;
     const rect = mapRef.current.getBoundingClientRect();
-    const mouseX = ((info.point.x - rect.left) / rect.width) * 100;
-    const mouseY = ((info.point.y - rect.top) / rect.height) * 100;
-    dragOffset.current = { 
-      x: mouseX - (plant.mapPosition?.x || 50), 
-      y: mouseY - (plant.mapPosition?.y || 50) 
-    };
-    setIsDragging(plant.id);
-  };
-
-  const handleDragEnd = (id: string, info: any) => {
-    if (!mapRef.current) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    let x = ((info.point.x - rect.left) / rect.width) * 100 - dragOffset.current.x;
-    let y = ((info.point.y - rect.top) / rect.height) * 100 - dragOffset.current.y;
+    
+    // Calculate relative position accounting for zoom and pan
+    const leftOffset = (rect.width * (1 - zoom)) / 2 + pan.x;
+    const topOffset = (rect.height * (1 - zoom)) / 2 + pan.y;
+    
+    let x = ((info.point.x - rect.left - leftOffset) / (rect.width * zoom)) * 100;
+    let y = ((info.point.y - rect.top - topOffset) / (rect.height * zoom)) * 100;
     
     x = Math.max(0, Math.min(100, x));
     y = Math.max(0, Math.min(100, y));
     
-    // Find if plant is in a zone
     const zone = zones.find(z => 
       x >= z.x && x <= z.x + z.width &&
       y >= z.y && y <= z.y + z.height
     );
 
-    setPlants(prev => prev.map(p => p.id === id ? { ...p, mapPosition: { x, y }, zoneId: zone?.id } : p));
-    setIsDragging(null);
-  };
+    const updatedMapPosition = { x, y };
+    const updatedZoneId = zone?.id;
 
-  const handleZoneDragStart = (info: any, zone: Zone) => {
-    if (!mapRef.current) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    const mouseX = ((info.point.x - rect.left) / rect.width) * 100;
-    const mouseY = ((info.point.y - rect.top) / rect.height) * 100;
-    dragOffset.current = { x: mouseX - zone.x, y: mouseY - zone.y };
+    setPlants(prev => prev.map(p => p.id === id ? { ...p, mapPosition: updatedMapPosition, zoneId: updatedZoneId } : p));
+    setIsDragging(null);
+
+    if (dbStatus === 'connected') {
+      const plant = plants.find(p => p.id === id);
+      if (plant) {
+        try {
+          await fetch(`/api/plants/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...plant, mapPosition: updatedMapPosition, zoneId: updatedZoneId })
+          });
+        } catch (err) {
+          console.error("Failed to sync plant position:", err);
+        }
+      }
+    }
   };
 
   const handleZoneDragEnd = (id: string, info: any) => {
     if (!mapRef.current) return;
     const rect = mapRef.current.getBoundingClientRect();
-    let x = ((info.point.x - rect.left) / rect.width) * 100 - dragOffset.current.x;
-    let y = ((info.point.y - rect.top) / rect.height) * 100 - dragOffset.current.y;
-    
     const zone = zones.find(z => z.id === id);
-    if (zone) {
-      x = Math.max(0, Math.min(100 - zone.width, x));
-      y = Math.max(0, Math.min(100 - zone.height, y));
-      
-      const updatedZones = zones.map(z => z.id === id ? { ...z, x, y } : z);
-      setZones(updatedZones);
-      updatePlantsInZones(updatedZones);
-    }
+    if (!zone) return;
+
+    const leftOffset = (rect.width * (1 - zoom)) / 2 + pan.x;
+    const topOffset = (rect.height * (1 - zoom)) / 2 + pan.y;
+
+    let x = ((info.point.x - rect.left - leftOffset) / (rect.width * zoom)) * 100 - (zone.width / 2);
+    let y = ((info.point.y - rect.top - topOffset) / (rect.height * zoom)) * 100 - (zone.height / 2);
+    
+    x = Math.max(0, Math.min(100 - zone.width, x));
+    y = Math.max(0, Math.min(100 - zone.height, y));
+    
+    const updatedZones = zones.map(z => z.id === id ? { ...z, x, y } : z);
+    setZones(updatedZones);
+    updatePlantsInZones(updatedZones);
   };
 
   const updatePlantsInZones = (currentZones: Zone[]) => {
@@ -1494,7 +2086,7 @@ function GardenMap({
     const newZone: Zone = {
       id: crypto.randomUUID(),
       name: t.addZone,
-      color: '#10b981', // emerald-500
+      color: '#10b981',
       x: 25,
       y: 25,
       width: 20,
@@ -1565,103 +2157,96 @@ function GardenMap({
             ref={mapRef}
             className="relative w-full aspect-square md:aspect-video bg-m3-surface-container-highest rounded-[40px] border border-m3-outline/10 overflow-hidden bg-[radial-gradient(#00000010_1px,transparent_1px)] [background-size:20px_20px]"
           >
-            {/* Map Background Image */}
-            {mapBackground ? (
-              <img 
-                src={mapBackground} 
-                className="absolute inset-0 w-full h-full object-cover opacity-80" 
-                alt="Garden Map Background"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="absolute inset-0 opacity-10 pointer-events-none">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-emerald-500 rounded-full blur-3xl" />
-                <div className="absolute bottom-20 right-20 w-64 h-64 bg-m3-primary rounded-full blur-3xl" />
-              </div>
-            )}
-
-            <AnimatePresence>
-              {zones.map((zone) => (
-                <motion.div
-                  key={zone.id}
-                  initial={{ opacity: 0 }}
-                  exit={{ opacity: 0 }}
-                  drag
-                  dragMomentum={false}
-                  dragConstraints={mapRef}
-                  dragElastic={0}
-                  onDragStart={(_, info) => handleZoneDragStart(info, zone)}
-                  onDragEnd={(_, info) => handleZoneDragEnd(zone.id, info)}
-                  onTap={() => setEditingZoneId(zone.id)}
-                  animate={{ 
-                    opacity: 0.3,
-                    x: `${zone.x}%`, 
-                    y: `${zone.y}%`
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  style={{ 
-                    position: 'absolute', 
-                    left: 0,
-                    top: 0,
-                    width: `${zone.width}%`, 
-                    height: `${zone.height}%`,
-                    backgroundColor: zone.color,
-                    border: `2px solid ${zone.color}`,
-                  }}
-                  className={`cursor-move rounded-xl ${editingZoneId === zone.id ? 'opacity-60 border-white ring-4 ring-white/20' : ''}`}
-                >
-                  <div className="absolute top-2 left-2 bg-black/40 text-white px-2 py-0.5 rounded text-[8px] font-bold whitespace-nowrap">
-                    {zone.name}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* Overlay for better contrast if background exists */}
-            {mapBackground && <div className="absolute inset-0 bg-black/5 pointer-events-none" />}
-
-            {plants.map((plant) => (
-              <motion.div
-                key={plant.id}
-                drag
-                dragMomentum={false}
-                dragConstraints={mapRef}
-                dragElastic={0}
-                onDragStart={(_, info) => handleDragStart(info, plant)}
-                onDragEnd={(_, info) => handleDragEnd(plant.id, info)}
-                animate={{ 
-                  x: plant.mapPosition ? `${plant.mapPosition.x}%` : '50%', 
-                  y: plant.mapPosition ? `${plant.mapPosition.y}%` : '50%'
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                style={{ 
-                  position: 'absolute',
-                  left: 0,
-                  top: 0
-                }}
-                className={`z-20 cursor-grab active:cursor-grabbing group ${isDragging === plant.id ? 'z-50' : ''}`}
+            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-2">
+              <button 
+                onClick={() => setZoom(prev => Math.min(prev + 0.5, 4))}
+                className="m3-btn-secondary !p-3 rounded-2xl shadow-lg"
+                title={t.zoomIn}
               >
-                <div className="flex flex-col items-center gap-2 -translate-x-1/2 -translate-y-1/2">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border border-m3-outline/10 transition-all duration-300 ${
-                    isDragging === plant.id ? 'scale-125 rotate-12 bg-m3-primary text-m3-on-primary' : 'bg-white text-m3-primary hover:scale-110'
-                  }`}>
-                    {plant.type === 'Baum' ? <TreeDeciduous className="w-6 h-6" /> : 
-                     plant.type === 'Blume' ? <Leaf className="w-6 h-6" /> : 
-                     <Sprout className="w-6 h-6" />}
-                  </div>
-                  <div className="bg-m3-surface-container-high px-3 py-1 rounded-full border border-m3-outline/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    <p className="text-[10px] font-bold">{plant.name}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                <ZoomIn className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setZoom(prev => Math.max(prev - 0.5, 1))}
+                className="m3-btn-secondary !p-3 rounded-2xl shadow-lg"
+                title={t.zoomOut}
+              >
+                <ZoomOut className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                className="m3-btn-secondary !p-3 rounded-2xl shadow-lg"
+                title={t.resetZoom}
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+            </div>
 
-            {plants.length === 0 && !mapBackground && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-m3-on-surface-variant/40">
-                <MapIcon className="w-24 h-24 mb-4 opacity-20" />
-                <p className="font-display font-bold text-xl">{t.noPlantsFound}</p>
-              </div>
-            )}
+            <motion.div
+              ref={contentRef}
+              drag={zoom > 1}
+              dragMomentum={false}
+              onDrag={(e, info) => setPan(prev => ({ x: prev.x + info.delta.x, y: prev.y + info.delta.y }))}
+              animate={{ 
+                scale: zoom,
+                x: pan.x,
+                y: pan.y
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="absolute inset-0 w-full h-full"
+            >
+              {/* Map Background Image */}
+              {mapBackground ? (
+                <img 
+                  src={mapBackground} 
+                  className="absolute inset-0 w-full h-full object-cover opacity-80" 
+                  alt="Garden Map Background"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                  <div className="absolute top-10 left-10 w-32 h-32 bg-emerald-500 rounded-full blur-3xl" />
+                  <div className="absolute bottom-20 right-20 w-64 h-64 bg-m3-primary rounded-full blur-3xl" />
+                </div>
+              )}
+
+              <AnimatePresence>
+                {zones.map((zone) => (
+                  <MapZoneItem
+                    key={zone.id}
+                    zone={zone}
+                    mapRef={contentRef}
+                    onDragEnd={handleZoneDragEnd}
+                    onTap={() => setEditingZoneId(zone.id)}
+                    isEditing={editingZoneId === zone.id}
+                    t={t}
+                    zoom={zoom}
+                  />
+                ))}
+              </AnimatePresence>
+
+              {/* Overlay for better contrast if background exists */}
+              {mapBackground && <div className="absolute inset-0 bg-black/5 pointer-events-none" />}
+
+              {plants.map((plant) => (
+                <MapPlantItem
+                  key={plant.id}
+                  plant={plant}
+                  mapRef={contentRef}
+                  onDragEnd={handleDragEnd}
+                  isDragging={isDragging}
+                  setIsDragging={setIsDragging}
+                  t={t}
+                  zoom={zoom}
+                />
+              ))}
+
+              {plants.length === 0 && !mapBackground && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-m3-on-surface-variant/40" style={{ scale: 1/zoom }}>
+                  <MapIcon className="w-24 h-24 mb-4 opacity-20" />
+                  <p className="font-display font-bold text-xl">{t.noPlantsFound}</p>
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
 
@@ -1768,7 +2353,54 @@ export default function App() {
   const [filterType, setFilterType] = useState<PlantType | 'Alle'>('Alle');
   const [selectedZoneId, setSelectedZoneId] = useState<string | 'Alle'>('Alle');
   const [sortBy, setSortBy] = useState<SortOption>('date-desc');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    return (localStorage.getItem('myplant_language') as Language) || 'en';
+  });
+  const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
+    return (localStorage.getItem('myplant_theme') as any) || 'auto';
+  });
+
+  const [dbConfig, setDbConfig] = useState(() => {
+    const saved = localStorage.getItem('myplant_db_config');
+    return saved ? JSON.parse(saved) : { host: '', user: '', password: '', database: '', port: '3306' };
+  });
+
+  const [dbStatus, setDbStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
+
+  useEffect(() => {
+    localStorage.setItem('myplant_theme', theme);
+    const root = window.document.documentElement;
+    if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('myplant_language', language);
+  }, [language]);
+
+  // Initial DB connection check
+  useEffect(() => {
+    const checkDb = async () => {
+      if (dbConfig.host) {
+        setDbStatus('connecting');
+        try {
+          const res = await fetch('/api/config/db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dbConfig)
+          });
+          const result = await res.json();
+          setDbStatus(result.success ? 'connected' : 'disconnected');
+        } catch (e) {
+          setDbStatus('disconnected');
+        }
+      }
+    };
+    checkDb();
+  }, []);
   const [modalStep, setModalStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1851,10 +2483,25 @@ export default function App() {
     if (savedBg) setMapBackground(savedBg);
     if (savedLang) setLanguage(savedLang as Language);
     if (savedZones) setZones(JSON.parse(savedZones));
-    if (saved) {
+    
+    if (dbStatus === 'connected') {
+      fetch('/api/plants')
+        .then(res => res.json())
+        .then(data => {
+          const parsedData = data.map((p: any) => ({
+            ...p,
+            images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
+            history: typeof p.history === 'string' ? JSON.parse(p.history) : p.history,
+            aiInsights: typeof p.aiInsights === 'string' ? JSON.parse(p.aiInsights) : p.aiInsights,
+            position: typeof p.position === 'string' ? JSON.parse(p.position) : p.position,
+            isOutdoor: !!p.isOutdoor
+          }));
+          setPlants(parsedData);
+        })
+        .catch(err => console.error("Failed to fetch plants:", err));
+    } else if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Migration for old data
         const migrated = parsed.map((p: any) => ({
           ...p,
           images: p.images || (p.image ? [p.image] : []),
@@ -1867,7 +2514,7 @@ export default function App() {
         console.error('Fehler beim Laden', e);
       }
     }
-  }, []);
+  }, [dbStatus]);
 
   useEffect(() => {
     localStorage.setItem('myplant_data', JSON.stringify(plants));
@@ -1940,21 +2587,48 @@ export default function App() {
     };
   }, [plants]);
 
-  const handleWaterPlant = (id: string) => {
+  const handleWaterPlant = async (id: string) => {
     const now = new Date().toISOString();
-    setPlants(plants.map(p => p.id === id ? { 
+    const updatedPlants = plants.map(p => p.id === id ? { 
       ...p, 
       lastWatered: now.split('T')[0],
       history: [...(p.history || []), { date: now }]
-    } : p));
+    } : p);
+    setPlants(updatedPlants);
+
+    if (dbStatus === 'connected') {
+      const plant = updatedPlants.find(p => p.id === id);
+      await fetch(`/api/plants/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plant)
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let newPlant: Plant;
     if (editingPlant) {
-      setPlants(plants.map(p => p.id === editingPlant.id ? { ...formData, id: p.id, history: p.history || [], diary: p.diary || [] } : p));
+      newPlant = { ...formData, id: editingPlant.id, history: editingPlant.history || [], diary: editingPlant.diary || [] };
+      setPlants(plants.map(p => p.id === editingPlant.id ? newPlant : p));
+      if (dbStatus === 'connected') {
+        await fetch(`/api/plants/${editingPlant.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPlant)
+        });
+      }
     } else {
-      setPlants([...plants, { ...formData, id: crypto.randomUUID(), history: [], diary: [] }]);
+      newPlant = { ...formData, id: crypto.randomUUID(), history: [], diary: [] };
+      setPlants([...plants, newPlant]);
+      if (dbStatus === 'connected') {
+        await fetch('/api/plants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPlant)
+        });
+      }
     }
     setIsModalOpen(false);
     setEditingPlant(null);
@@ -1980,8 +2654,15 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Löschen?')) setPlants(plants.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    if (confirm('Löschen?')) {
+      setPlants(plants.filter(p => p.id !== id));
+      if (dbStatus === 'connected') {
+        await fetch(`/api/plants/${id}`, {
+          method: 'DELETE'
+        });
+      }
+    }
   };
 
   const exportData = () => {
@@ -2052,9 +2733,21 @@ export default function App() {
                 mapBackground={mapBackground}
                 setMapBackground={setMapBackground}
                 language={language}
+                dbStatus={dbStatus}
               />
             } />
+            <Route path="/insights" element={<AIInsightsView stats={stats} language={language} />} />
             <Route path="/plant/:id" element={<PlantDetailPage plants={plants} setPlants={setPlants} onWater={handleWaterPlant} onEdit={handleEdit} language={language} />} />
+            <Route path="/settings" element={
+              <Settings 
+                language={language} 
+                theme={theme} 
+                setTheme={setTheme} 
+                dbConfig={dbConfig} 
+                setDbConfig={setDbConfig}
+                dbStatus={dbStatus}
+              />
+            } />
           </Routes>
         </div>
 
@@ -2214,16 +2907,27 @@ export default function App() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <label className="text-xs font-black uppercase opacity-40 px-2">{t.plantType}</label>
-                                  <select className="m3-input" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})}>
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     {PLANT_TYPES.map(type => (
-                                      <option key={type} value={type}>
-                                        {type === 'Baum' ? t.tree : 
-                                         type === 'Strauch' ? t.shrub : 
-                                         type === 'Blume' ? t.flower : 
-                                         type === 'Gemüse' ? t.vegetable : t.other}
-                                      </option>
+                                      <button 
+                                        key={type}
+                                        type="button"
+                                        onClick={() => setFormData({...formData, type})}
+                                        className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${formData.type === type ? 'bg-m3-primary text-m3-on-primary border-m3-primary' : 'bg-m3-surface-container hover:bg-m3-surface-container-high border-m3-outline/10'}`}
+                                      >
+                                        {type === 'Baum' ? <TreeDeciduous className="w-6 h-6" /> : 
+                                         type === 'Strauch' ? <Sprout className="w-6 h-6" /> : 
+                                         type === 'Blume' ? <Flower2 className="w-6 h-6" /> : 
+                                         type === 'Gemüse' ? <Carrot className="w-6 h-6" /> : <Leaf className="w-6 h-6" />}
+                                        <span className="text-xs font-bold">
+                                          {type === 'Baum' ? t.tree : 
+                                           type === 'Strauch' ? t.shrub : 
+                                           type === 'Blume' ? t.flower : 
+                                           type === 'Gemüse' ? t.vegetable : t.other}
+                                        </span>
+                                      </button>
                                     ))}
-                                  </select>
+                                  </div>
                                 </div>
                                 <div className="space-y-2">
                                   <label className="text-xs font-black uppercase opacity-40 px-2">{t.location}</label>

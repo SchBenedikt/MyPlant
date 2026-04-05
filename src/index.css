@@ -33,33 +33,33 @@
   --color-m3-surface-container-highest: #dfe6e0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-m3-primary: #95d5b2;
-    --color-m3-on-primary: #003924;
-    --color-m3-primary-container: #005235;
-    --color-m3-on-primary-container: #b1f1ce;
+@custom-variant dark (&:where(.dark, .dark *));
 
-    --color-m3-secondary: #b7e4c7;
-    --color-m3-on-secondary: #003822;
-    --color-m3-secondary-container: #284f3a;
-    --color-m3-on-secondary-container: #d3f0dd;
+.dark {
+  --color-m3-primary: #95d5b2;
+  --color-m3-on-primary: #003924;
+  --color-m3-primary-container: #005235;
+  --color-m3-on-primary-container: #b1f1ce;
 
-    --color-m3-tertiary: #a6ccbe;
-    --color-m3-on-tertiary: #0e352b;
-    --color-m3-tertiary-container: #264c41;
-    --color-m3-on-tertiary-container: #c1e9da;
+  --color-m3-secondary: #b7e4c7;
+  --color-m3-on-secondary: #003822;
+  --color-m3-secondary-container: #284f3a;
+  --color-m3-on-secondary-container: #d3f0dd;
 
-    --color-m3-surface: #191c1b;
-    --color-m3-on-surface: #e1e3e0;
-    --color-m3-surface-variant: #404944;
-    --color-m3-on-surface-variant: #bfc9c2;
+  --color-m3-tertiary: #a6ccbe;
+  --color-m3-on-tertiary: #0e352b;
+  --color-m3-tertiary-container: #264c41;
+  --color-m3-on-tertiary-container: #c1e9da;
 
-    --color-m3-outline: #89938d;
-    --color-m3-surface-container: #1d211f;
-    --color-m3-surface-container-high: #272b29;
-    --color-m3-surface-container-highest: #323634;
-  }
+  --color-m3-surface: #191c1b;
+  --color-m3-on-surface: #e1e3e0;
+  --color-m3-surface-variant: #404944;
+  --color-m3-on-surface-variant: #bfc9c2;
+
+  --color-m3-outline: #89938d;
+  --color-m3-surface-container: #1d211f;
+  --color-m3-surface-container-high: #272b29;
+  --color-m3-surface-container-highest: #323634;
 }
 
 @layer base {

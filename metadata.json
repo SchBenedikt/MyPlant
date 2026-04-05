@@ -1,5 +1,5 @@
 {
   "name": "MyPlant",
   "description": "Dein persönliches Pflanzen-Tagebuch und Garten-Management mit KI-Unterstützung.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["camera", "geolocation"]
 }
