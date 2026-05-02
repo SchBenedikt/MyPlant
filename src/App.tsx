@@ -89,6 +89,7 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
+  Legend,
   ResponsiveContainer,
   AreaChart,
   Area
@@ -130,6 +131,15 @@ interface AIInsight {
   data: any;
 }
 
+interface GrowthRecord {
+  id: string;
+  date: string;
+  height?: number;
+  width?: number;
+  image?: string;
+  notes?: string;
+}
+
 interface Plant {
   id: string;
   name: string;
@@ -142,6 +152,7 @@ interface Plant {
   wateringInterval?: number;
   history: WateringEvent[];
   diary: DiaryEntry[];
+  growthRecords?: GrowthRecord[];
   isOutdoor: boolean;
   health?: string;
   size?: string;
@@ -1145,12 +1156,13 @@ function AICareAssistant({ plant, language, onClose }: { plant: Plant, language:
   );
 }
 
-function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: { 
+function PlantDetailPage({ plants, setPlants, onWater, onEdit, language, dbStatus }: { 
   plants: Plant[], 
   setPlants: React.Dispatch<React.SetStateAction<Plant[]>>, 
   onWater: (id: string) => void, 
   onEdit: (p: Plant) => void,
-  language: Language
+  language: Language,
+  dbStatus: 'connected' | 'disconnected' | 'connecting'
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1159,6 +1171,12 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
   const [diaryText, setDiaryText] = useState('');
   const [diaryImage, setDiaryImage] = useState<string | null>(null);
   const diaryFileRef = useRef<HTMLInputElement>(null);
+  
+  const [growthHeight, setGrowthHeight] = useState('');
+  const [growthWidth, setGrowthWidth] = useState('');
+  const [growthImage, setGrowthImage] = useState<string | null>(null);
+  const growthFileRef = useRef<HTMLInputElement>(null);
+
   const t = translations[language];
 
   if (!plant) return <div className="p-12 text-center">{t.noPlantsFound}</div>;
@@ -1181,6 +1199,44 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
 
     setDiaryText('');
     setDiaryImage(null);
+  };
+  
+  const handleAddGrowthRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!growthHeight && !growthWidth && !growthImage) return;
+
+    const newRecord: GrowthRecord = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      height: growthHeight ? parseFloat(growthHeight) : undefined,
+      width: growthWidth ? parseFloat(growthWidth) : undefined,
+      image: growthImage || undefined
+    };
+
+    const updatedPlants = plants.map(p => p.id === plant.id ? {
+      ...p,
+      growthRecords: [newRecord, ...(p.growthRecords || [])]
+    } : p);
+    setPlants(updatedPlants);
+
+    if (dbStatus === 'connected') {
+      const updatedPlant = updatedPlants.find(p => p.id === plant.id);
+      if (updatedPlant) {
+        try {
+          await fetch(`/api/plants/${plant.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedPlant)
+          });
+        } catch (err) {
+          console.error("Failed to sync growth record:", err);
+        }
+      }
+    }
+
+    setGrowthHeight('');
+    setGrowthWidth('');
+    setGrowthImage(null);
   };
 
   const handleDiaryImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1302,6 +1358,17 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
     date: format(parseISO(event.date), 'dd.MM.', { locale: language === 'de' ? de : enUS }),
     val: 1
   }));
+
+  const growthChartData = useMemo(() => {
+    if (!plant.growthRecords || plant.growthRecords.length === 0) return [];
+    return [...plant.growthRecords]
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+      .map(record => ({
+        date: format(parseISO(record.date), 'dd.MM.', { locale: language === 'de' ? de : enUS }),
+        height: record.height,
+        width: record.width
+      }));
+  }, [plant.growthRecords, language]);
 
   const mainImage = plant.images && plant.images.length > 0 ? plant.images[activeImage] : null;
 
@@ -1594,6 +1661,138 @@ function PlantDetailPage({ plants, setPlants, onWater, onEdit, language }: {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Growth Tracking Section */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-display font-black text-m3-primary flex items-center gap-3">
+                <TrendingUp className="w-6 h-6" /> {t.growthTracking}
+              </h3>
+            </div>
+
+            {growthChartData.length > 0 && (
+              <div className="m3-card !p-6 sm:!p-8 h-80">
+                <h4 className="text-sm font-black uppercase opacity-40 mb-6 flex items-center gap-2">
+                   <BarChart3 className="w-4 h-4" /> {t.growthChart}
+                </h4>
+                <ResponsiveContainer width="100%" height="80%">
+                  <LineChart data={growthChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#00000010" />
+                    <XAxis dataKey="date" fontSize={10} fontWeight="bold" />
+                    <YAxis fontSize={10} fontWeight="bold" />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)' }}
+                      labelStyle={{ fontWeight: 'black', color: '#1b4332' }}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} />
+                    <Line type="monotone" dataKey="height" stroke="#1b4332" strokeWidth={3} dot={{ r: 4, fill: '#1b4332' }} name={t.height} />
+                    <Line type="monotone" dataKey="width" stroke="#6b9080" strokeWidth={3} dot={{ r: 4, fill: '#6b9080' }} name={t.width} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            <div className="m3-card !p-4 sm:!p-8 bg-m3-secondary-container/10 border-m3-secondary/10">
+              <form onSubmit={handleAddGrowthRecord} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <label className="text-xs font-black uppercase opacity-40 px-2">{t.height} ({t.cm})</label>
+                     <input 
+                       type="number" 
+                       placeholder="0" 
+                       className="m3-input" 
+                       value={growthHeight} 
+                       onChange={e => setGrowthHeight(e.target.value)} 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-xs font-black uppercase opacity-40 px-2">{t.width} ({t.cm})</label>
+                     <input 
+                       type="number" 
+                       placeholder="0" 
+                       className="m3-input" 
+                       value={growthWidth} 
+                       onChange={e => setGrowthWidth(e.target.value)} 
+                     />
+                   </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => growthFileRef.current?.click()}
+                      className={`m3-btn-ghost !p-3 ${growthImage ? 'text-m3-primary bg-m3-primary/10' : ''}`}
+                    >
+                      <Camera className="w-6 h-6" />
+                    </button>
+                    <input 
+                      ref={growthFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const r = new FileReader();
+                          r.onload = () => setGrowthImage(r.result as string);
+                          r.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    {growthImage && (
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-m3-primary">
+                        <img src={growthImage} className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => setGrowthImage(null)}
+                          className="absolute top-0 right-0 bg-rose-500 text-white p-0.5 rounded-bl-lg"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button type="submit" className="m3-btn-primary" disabled={!growthHeight && !growthWidth && !growthImage}>
+                    {t.addGrowthRecord}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {plant.growthRecords && plant.growthRecords.length > 0 && (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {plant.growthRecords.map(record => (
+                   <div key={record.id} className="m3-card !p-4 flex gap-4">
+                      {record.image && (
+                        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                          <img src={record.image} className="w-full h-full object-cover" onDoubleClick={() => setSelectedImage(record.image!)} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-[10px] font-black uppercase opacity-40">{format(parseISO(record.date), 'dd. MMMM yyyy', { locale: language === 'de' ? de : enUS })}</p>
+                        </div>
+                        <div className="flex gap-4">
+                           {record.height && (
+                             <div>
+                               <p className="text-[10px] font-black uppercase opacity-30">{t.height}</p>
+                               <p className="font-bold text-sm">{record.height}{t.cm}</p>
+                             </div>
+                           )}
+                           {record.width && (
+                             <div>
+                               <p className="text-[10px] font-black uppercase opacity-30">{t.width}</p>
+                               <p className="font-bold text-sm">{record.width}{t.cm}</p>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+                   </div>
+                 ))}
+               </div>
+            )}
           </div>
 
           {/* Diary Section */}
@@ -2543,6 +2742,7 @@ export default function App() {
             images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
             history: typeof p.history === 'string' ? JSON.parse(p.history) : p.history,
             aiInsights: typeof p.aiInsights === 'string' ? JSON.parse(p.aiInsights) : p.aiInsights,
+            growthRecords: typeof p.growthRecords === 'string' ? JSON.parse(p.growthRecords) : p.growthRecords,
             position: typeof p.position === 'string' ? JSON.parse(p.position) : p.position,
             isOutdoor: !!p.isOutdoor
           }));
@@ -2788,7 +2988,7 @@ export default function App() {
               />
             } />
             <Route path="/insights" element={<AIInsightsView stats={stats} language={language} />} />
-            <Route path="/plant/:id" element={<PlantDetailPage plants={plants} setPlants={setPlants} onWater={handleWaterPlant} onEdit={handleEdit} language={language} />} />
+            <Route path="/plant/:id" element={<PlantDetailPage plants={plants} setPlants={setPlants} onWater={handleWaterPlant} onEdit={handleEdit} language={language} dbStatus={dbStatus} />} />
             <Route path="/settings" element={
               <Settings 
                 language={language} 

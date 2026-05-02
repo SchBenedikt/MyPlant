@@ -64,6 +64,7 @@ async function startServer() {
           images JSON,
           history JSON,
           aiInsights JSON,
+          growthRecords JSON,
           position JSON
         )
       `);
@@ -101,7 +102,7 @@ async function startServer() {
     const plant = req.body;
     try {
       await getPool().query(
-        "INSERT INTO plants (id, name, type, datePlanted, isOutdoor, health, size, notes, images, history, aiInsights, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO plants (id, name, type, datePlanted, isOutdoor, health, size, notes, images, history, aiInsights, growthRecords, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           plant.id,
           plant.name,
@@ -114,6 +115,7 @@ async function startServer() {
           JSON.stringify(plant.images || []),
           JSON.stringify(plant.history || []),
           JSON.stringify(plant.aiInsights || []),
+          JSON.stringify(plant.growthRecords || []),
           JSON.stringify(plant.position || { x: 50, y: 50 })
         ]
       );
@@ -128,7 +130,7 @@ async function startServer() {
     const plant = req.body;
     try {
       await getPool().query(
-        "UPDATE plants SET name=?, type=?, datePlanted=?, isOutdoor=?, health=?, size=?, notes=?, images=?, history=?, aiInsights=?, position=? WHERE id=?",
+        "UPDATE plants SET name=?, type=?, datePlanted=?, isOutdoor=?, health=?, size=?, notes=?, images=?, history=?, aiInsights=?, growthRecords=?, position=? WHERE id=?",
         [
           plant.name,
           plant.type,
@@ -140,6 +142,7 @@ async function startServer() {
           JSON.stringify(plant.images || []),
           JSON.stringify(plant.history || []),
           JSON.stringify(plant.aiInsights || []),
+          JSON.stringify(plant.growthRecords || []),
           JSON.stringify(plant.position || { x: 50, y: 50 }),
           id
         ]

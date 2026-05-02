@@ -161,6 +161,14 @@ export const translations = {
     disconnected: "Disconnected",
     sqlInstructions: "SQL Setup Instructions",
     sqlInstructionsContent: "Run these commands in your MySQL terminal to set up the database:",
+    growthTracking: "Growth Tracking",
+    addGrowthRecord: "Add Growth Record",
+    height: "Height",
+    width: "Width",
+    growthChart: "Growth Chart",
+    cm: "cm",
+    date: "Date",
+    measurements: "Measurements",
   },
   de: {
     dashboard: "Dashboard",
@@ -322,5 +330,13 @@ export const translations = {
     disconnected: "Nicht verbunden",
     sqlInstructions: "SQL-Einrichtungsanleitung",
     sqlInstructionsContent: "Führe diese Befehle in deinem MySQL-Terminal aus, um die Datenbank einzurichten:",
+    growthTracking: "Wachstums-Tracking",
+    addGrowthRecord: "Wachstumseintrag",
+    height: "Höhe",
+    width: "Breite",
+    growthChart: "Wachstumschart",
+    cm: "cm",
+    date: "Datum",
+    measurements: "Messungen",
   }
 };
